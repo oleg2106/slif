@@ -87,7 +87,9 @@ class ShowLessonInIframeXBlock(XBlock):
             html = self.resource_string("static/html/slif.html")
             frag = Fragment(html.format(self=self))
             frag.add_javascript_url(self.runtime.local_resource_url(self, 'public/js/jschannel.js'))
+            frag.add_javascript(self.resource_string("public/js/production.js"))
             frag.add_javascript(self.resource_string("static/js/src/slif.js"))
+            frag.add_css(self.resource_string("public/css/style.css"))
             frag.initialize_js('ShowLessonInIframeXBlock', {'state': self.state,
                                                             'answer': self.score})
         return frag
