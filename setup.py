@@ -22,7 +22,7 @@ def package_data(pkg, roots):
 
 setup(
     name='slif-xblock',
-    version='0.97',
+    version='0.98',
     description='slif XBlock',   # TODO: write a better description.
     license='UNKNOWN',          # TODO: choose a license: 'AGPL v3' and 'Apache 2.0' are popular.
     packages=[
