@@ -1,0 +1,14 @@
+<section>
+  <div id="current_score">Текущая отметка: <span id="current_score_value">{{ score }}</span></div>
+  <div id="current_max_score">Текущая максимальная отметка:{{ maxscore }}</div>
+  <iframe name="iframe_slif_problem"
+      id="iframe_slif_problem"
+      sandbox="allow-scripts allow-popups allow-same-origin allow-forms allow-pointer-lock"
+      seamless="seamless"
+      frameborder="0"
+      src="{{ href }}"
+      height="{{ height }}"
+      width="{{ width }}">
+  </iframe>
+</section>
+

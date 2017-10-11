@@ -22,19 +22,14 @@ def package_data(pkg, roots):
 
 setup(
     name='slif-xblock',
-    version='0.98',
+    version='0.99',
     description='slif XBlock',   # TODO: write a better description.
-    license='UNKNOWN',          # TODO: choose a license: 'AGPL v3' and 'Apache 2.0' are popular.
-    packages=[
-        'slif',
-    ],
+    packages=['slif'],
     install_requires=[
         'XBlock',
     ],
     entry_points={
-        'xblock.v1': [
-            'slif = slif:ShowLessonInIframeXBlock',
-        ]
+        'xblock.v1': 'slif = slif:ShowLessonInIframeXBlock',        
     },
-    package_data=package_data("slif", ["static", "public"]),
+    package_data=package_data("slif", ["static", "templates", "public"]),
 )

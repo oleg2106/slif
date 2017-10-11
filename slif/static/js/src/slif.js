@@ -1,6 +1,5 @@
 /* Javascript for ShowLessonInIframeXBlock. */
-function ShowLessonInIframeXBlock(runtime, element, data) {
-
+function ShowLessonInIframeXBlock(runtime, element, slif_state) {
     var handlerUrl  = runtime.handlerUrl(element, 'save_x_state');
     
     var channel;
@@ -28,7 +27,7 @@ function ShowLessonInIframeXBlock(runtime, element, data) {
                             success: function(ans){
                                         if (ans.error){
                                             console.log(ans.error);
-                                        }else if(score in ans){
+                                        }else if('score' in ans){
                                             $('#current_score_value').text(ans.score);
                                         }
                                      }
@@ -51,22 +50,39 @@ function ShowLessonInIframeXBlock(runtime, element, data) {
                     method: "getState",
                     success: function(s) {
                                 activity['state'] = s;
-                                if ('answer' in params && params.answer){
+                                if ('score' in params && params.score){
                                     callGetGrade();
                                 }else{
                                     ask_server();
                                 }
                              }
                 });
-            }else if('answer' in params && params.answer){
+            }else if('score' in params && params.score){
                 callGetGrade();
             }
         });
+
+        // always get "Uncaught params cannot be a recursive data structure" 
+        // hope it helps 
+        var score = slif_state.data.score;
+        var state = slif_state.data.state;
+        if (slif_state.data.score == null){
+            score = '';
+        }
+        if (slif_state.data.state == null){
+            state = '';
+        }
         
+        var set_state_params = {
+            'state': state,
+            'score': score
+        };
+
         channel.call({
             method: "setState",
-            params: {data},
-            success: function(){}
+            params: set_state_params,
+            success: function(){},
+            error: function(error, message) { alert(error, message); },
         });
     });
 }

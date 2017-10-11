@@ -2,11 +2,11 @@
 
 import pkg_resources
 
+from django.template import Context, Template
+
 from xblock.core import XBlock
 from xblock.fields import Scope, String, Integer, Float, Boolean, DateTime
 from xblock.fragment import Fragment
-
-from random import choice
 
 class ShowLessonInIframeXBlock(XBlock):
     """
@@ -56,43 +56,51 @@ class ShowLessonInIframeXBlock(XBlock):
 
     has_score = True
 
-    def resource_string(self, path):
-        """Handy helper for getting resources from our kit."""
-        data = pkg_resources.resource_string(__name__, path)
-        return data.decode("utf8")
-
     def studio_view(self, context=None):
         """
-        Create a fragment used to display the edit view in the Studio.
+        Studio edit view
         """
-        html = self.resource_string("static/html/slif_studio_edit.html")
-        frag = Fragment(html.format(self=self))
-        frag.add_javascript(self.resource_string("static/js/src/slif_studio_edit.js"))
-        frag.initialize_js('SlifStudioEdit')
+
+        context = {
+            'href': self.href,
+            'width': self.width,
+            'height': self.height,
+            'maxscore': self.maxscore,
+        }
         
-        return frag
+        fragment = Fragment()
+        fragment.add_content(slif_render_template('templates/html/slif_studio_edit.html', context))
+        fragment.add_javascript(slif_load_resource("static/js/src/slif_studio_edit.js"))
+        fragment.initialize_js('SlifStudioEdit')        
+        return fragment        
+
 
     # TO-DO: change this view to display your data your own way.
     def student_view(self, context=None):
         """
-        The primary view of the ShowLessonInIframeXBlock, shown to students
-        when viewing courses.
+        The primary view of the ShowLessonInIframeXBlock, shown to students when viewing courses.
         """
+
+        context = {
+            'href': self.href,
+            'width': self.width,
+            'height': self.height,
+            'maxscore': self.maxscore,
+            'score': self.score
+        }
+        
+        fragment = Fragment()
         if not self.href:
-            html = self.resource_string("static/html/slif_student_empty.html")
-            frag = Fragment(html.format(self=self))
-            frag.add_css(self.resource_string("static/css/slif_empty.css"))
-            return frag
+            fragment.add_content(slif_render_template('templates/html/slif_student_empty.html', context))
+            fragment.add_css(slif_load_resource("static/css/slif_empty.css"))
         else:
-            html = self.resource_string("static/html/slif.html")
-            frag = Fragment(html.format(self=self))
-            frag.add_javascript_url(self.runtime.local_resource_url(self, 'public/js/jschannel.js'))
-            frag.add_javascript_url(self.runtime.local_resource_url(self, 'static/js/src/slif.js'))
+            fragment.add_content(slif_render_template('templates/html/slif.html', context))          
+            fragment.add_javascript_url(self.runtime.local_resource_url(self, 'public/js/jschannel.js'))
+            fragment.add_javascript_url(self.runtime.local_resource_url(self, 'static/js/src/slif.js'))
             #frag.add_javascript_url(self.runtime.local_resource_url(self, 'public/js/production.js'))
-            #frag.add_css(self.resource_string("public/css/style.css"))
-            frag.initialize_js('ShowLessonInIframeXBlock', {'state': self.state,
-                                                            'answer': self.score})
-        return frag
+            #frag.add_css(slif_load_resource("public/css/style.css"))
+            fragment.initialize_js('ShowLessonInIframeXBlock', {'data': {'state': self.state, 'score': self.score}})
+        return fragment
 
 
     @XBlock.json_handler
@@ -196,3 +204,23 @@ class ShowLessonInIframeXBlock(XBlock):
         """The maximum raw score of our problem.
         """
         return self.maxscore
+
+
+def slif_load_resource(resource_path):  # pragma: NO COVER
+    """
+    Gets the content of a resource
+    """
+    resource_content = pkg_resources.resource_string(__name__, resource_path)
+    return unicode(resource_content.decode('utf8'))
+
+
+def slif_render_template(template_path, context=None):  # pragma: NO COVER
+    """
+    Evaluate a template by resource path, applying the provided context.
+    """
+    if context is None:
+        context = {}
+
+    template_str = slif_load_resource(template_path)
+    template = Template(template_str)
+    return template.render(Context(context))
