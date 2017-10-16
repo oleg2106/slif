@@ -116,10 +116,10 @@ class ShowLessonInIframeXBlock(XBlock):
             m = data.get('maxscore').replace(',', '.')
             m = float(m)
             if m < self.min_ms:
-                result['errors'].append("maxscore (число не меньше %d)" % self.min_ms)
+                result['errors'].append("maxscore (not less than %d)" % self.min_ms)
                 result['success'] = False                
         except:
-            result['errors'].append("maxscore (число не меньше %d)" % self.min_ms)
+            result['errors'].append("maxscore (not less than %d)" % self.min_ms)
             result['success'] = False
 
         if not result['success']:
