@@ -16,6 +16,9 @@ class ShowLessonInIframeXBlock(XBlock):
     # Fields are defined on the class.  You can access them in your code as
     # self.<fieldname>.
     
+    #min maxscore
+    min_ms = 1
+    
     score = Float(
         values={"min": 0},
         default=None, scope=Scope.user_state,
@@ -49,30 +52,38 @@ class ShowLessonInIframeXBlock(XBlock):
     )
 
     maxscore = Float(
-        values={"min": 1},
+        values={"min": min_ms},
         default=1, scope=Scope.settings,
         help=("Max score"),
     )
 
     has_score = True
 
-    def studio_view(self, context=None):
-        """
-        Studio edit view
-        """
+    def fill_context(self, context=None):
+        if not context:
+            context = {}
 
-        context = {
+        context.update({
             'href': self.href,
             'width': self.width,
             'height': self.height,
             'maxscore': self.maxscore,
-        }
+            'score': self.score
+        })
+        
+        return context
+
+    def studio_view(self, context=None):
+        """
+        Studio edit view
+        """
+        context = self.fill_context(context)
         
         fragment = Fragment()
-        fragment.add_content(slif_render_template('templates/html/slif_studio_edit.html', context))
-        fragment.add_javascript(slif_load_resource("static/js/src/slif_studio_edit.js"))
+        fragment.add_content(render_template('public/html/slif_studio_edit.html', context))
+        fragment.add_javascript(resource_string("public/js/slif_studio_edit.js"))
         fragment.initialize_js('SlifStudioEdit')        
-        return fragment        
+        return fragment
 
 
     # TO-DO: change this view to display your data your own way.
@@ -80,25 +91,16 @@ class ShowLessonInIframeXBlock(XBlock):
         """
         The primary view of the ShowLessonInIframeXBlock, shown to students when viewing courses.
         """
-
-        context = {
-            'href': self.href,
-            'width': self.width,
-            'height': self.height,
-            'maxscore': self.maxscore,
-            'score': self.score
-        }
+        context = self.fill_context(context)
         
         fragment = Fragment()
         if not self.href:
-            fragment.add_content(slif_render_template('templates/html/slif_student_empty.html', context))
-            fragment.add_css(slif_load_resource("static/css/slif_empty.css"))
+            fragment.add_content(render_template('public/html/slif_student_empty.html', context))
         else:
-            fragment.add_content(slif_render_template('templates/html/slif.html', context))          
+            fragment.add_content(render_template('public/html/slif.html', context))          
             fragment.add_javascript_url(self.runtime.local_resource_url(self, 'public/js/jschannel.js'))
-            fragment.add_javascript_url(self.runtime.local_resource_url(self, 'static/js/src/slif.js'))
-            #frag.add_javascript_url(self.runtime.local_resource_url(self, 'public/js/production.js'))
-            #frag.add_css(slif_load_resource("public/css/style.css"))
+            fragment.add_javascript_url(self.runtime.local_resource_url(self, 'public/js/slif.js'))
+            #frag.add_css(resource_string("public/css/style.css"))
             fragment.initialize_js('ShowLessonInIframeXBlock', {'data': {'state': self.state, 'score': self.score}})
         return fragment
 
@@ -108,18 +110,27 @@ class ShowLessonInIframeXBlock(XBlock):
         """
         Called when submitting the form in Studio.
         """
+        result = {'success': True, 'errors': []}
+
+        try:
+            m = data.get('maxscore').replace(',', '.')
+            m = float(m)
+            if m < self.min_ms:
+                result['errors'].append("maxscore (число не меньше %d)" % self.min_ms)
+                result['success'] = False                
+        except:
+            result['errors'].append("maxscore (число не меньше %d)" % self.min_ms)
+            result['success'] = False
+
+        if not result['success']:
+            return result
+
         self.href = data.get('href')
         self.width  = data.get('width')
         self.height = data.get('height')
+        self.maxscore = m
 
-        try:
-            m = float(data.get('maxscore'))
-            if m >= 1:
-                self.maxscore = m
-        except:
-            pass
-
-        return {'result': 'success'}
+        return result
 
     @XBlock.json_handler
     def save_x_state(self, data, suffix=''):
@@ -206,7 +217,7 @@ class ShowLessonInIframeXBlock(XBlock):
         return self.maxscore
 
 
-def slif_load_resource(resource_path):  # pragma: NO COVER
+def resource_string(resource_path):  # pragma: NO COVER
     """
     Gets the content of a resource
     """
@@ -214,13 +225,13 @@ def slif_load_resource(resource_path):  # pragma: NO COVER
     return unicode(resource_content.decode('utf8'))
 
 
-def slif_render_template(template_path, context=None):  # pragma: NO COVER
+def render_template(template_path, context=None):  # pragma: NO COVER
     """
     Evaluate a template by resource path, applying the provided context.
     """
     if context is None:
         context = {}
 
-    template_str = slif_load_resource(template_path)
+    template_str = resource_string(template_path)
     template = Template(template_str)
     return template.render(Context(context))

@@ -22,7 +22,7 @@ def package_data(pkg, roots):
 
 setup(
     name='slif-xblock',
-    version='0.99',
+    version='0.2',
     description='slif XBlock',   # TODO: write a better description.
     packages=['slif'],
     install_requires=[
@@ -31,5 +31,5 @@ setup(
     entry_points={
         'xblock.v1': 'slif = slif:ShowLessonInIframeXBlock',        
     },
-    package_data=package_data("slif", ["static", "templates", "public"]),
+    package_data=package_data("slif", ["public"]),
 )
